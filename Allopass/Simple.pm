@@ -1,6 +1,6 @@
 package Business::PhoneBill::Allopass::Simple;
-use vars qw($VERSION @ISA @EXPORT);
 
+use vars qw($VERSION @ISA @EXPORT);
 $VERSION = "1.01";
 
 use HTTP::Request::Common qw(GET POST);
@@ -8,6 +8,7 @@ use LWP::UserAgent;
 
 my $baseurl = 'http://www.allopass.com/check/vf.php4';
 my $error   = '';
+
 =head1 NAME
 
 Billing::Allopass::Simple - A simple function for micropayment system from Allopass
@@ -30,6 +31,7 @@ This alternative to Business::PhoneBill::Allopass justs performs access code che
 See I<http://www.allopass.com/index.php4?ADV=1508058> for more informations on their system and how it basically works.
 
 =head1 FUNCTIONS
+
 =item B<allopass_check> - Simply checks if a code has been recently validated for this document.
 
     allopass_check($document_id, $code);
@@ -37,6 +39,7 @@ See I<http://www.allopass.com/index.php4?ADV=1508058> for more informations on t
 You must perform this check within 2 minutes after the code is entered.
 
 =cut
+
 sub allopass_check {
     my ($doc_id, $code, $r) = @_;
     my ($res, $ua, $req);
@@ -50,11 +53,13 @@ sub allopass_check {
     $res = $ua->simple_request($req)->as_string;
     return _is_res_ok($res);
 }
+
 =item B<get_last_allopass_error> - Simply checks if a code has been recently validated for this document.
 
     print get_last_allopass_error();
 
 =cut
+
 sub get_last_allopass_error {
     shift->{error};
 }
@@ -79,6 +84,7 @@ sub _is_res_ok {
 sub _set_error {
     $error=shift;
 }
+
 =head1 AUTHOR
 
 Bernard Nauwelaerts <bpn@it-development.be>
@@ -89,4 +95,5 @@ GPL.  Enjoy !
 See COPYING for further informations on the GPL.
 
 =cut
+
 1;

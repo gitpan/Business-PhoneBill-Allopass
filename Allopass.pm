@@ -1,5 +1,7 @@
 package Business::PhoneBill::Allopass;
-use vars qw/$VERSION/; $VERSION = "1.02";
+
+use vars qw/$VERSION/;
+$VERSION = "1.03";
 
 =head1 NAME
 
@@ -65,7 +67,7 @@ sub new {
         ses_file =>    $ses_file,
         error    =>    '',
     };
-    $self = bless {}, $class;
+    $self = bless $self, $class;
     $self;
 }
 
@@ -81,11 +83,12 @@ Next accesses to the script will be protected by the session-based system, and y
 
 sub check {
     my $self=shift;
-    my ($doc_id, $code, $r) = @_;
+    my $doc_id=shift || return 0;
+    my $code = shift || '';
     my ($res, $ua, $req);
     if ($self->_is_session($doc_id)) {
         return 1;
-    } elsif (defined $code && $code ne "") {
+    } elsif ($code) {
         $ua = LWP::UserAgent->new;
         $ua->agent('Business::PhoneBill::Allopass/'.$VERSION);
         $req = POST $baseurl,
@@ -142,8 +145,12 @@ sub check_code {
 	];
     $res = $ua->simple_request($req)->as_string;
     if ($res=~/Set-Cookie: AP_CHECK/) {
-        $self->_add_session($docid, $code);
         $self->_set_error('Allopass Check Code OK');
+        my $r = $self->_add_session($docid, $code);
+        if ($r) {
+            $self->_set_error($r);
+            return 0;
+        }
         return 1;
     }
     0;
@@ -152,7 +159,11 @@ sub check_code {
 =head1 PROPERTIES
 
 =item B<ttl> - Session time to live property.
+
+    Set it to the session expiration time, in minutes.
+
 =cut
+
 sub ttl {
     my $self=shift;
     my $val =shift;
@@ -161,8 +172,11 @@ sub ttl {
 }
 
 =item B<os> - Operating system property.
+
     You need to set it to 1 only if your OS doesn't support flock (windoze ???).
+
 =cut
+
 sub os {
     my $self=shift;
     my $val =shift;
@@ -323,4 +337,5 @@ GPL.  Enjoy !
 See COPYING for further informations on the GPL.
 
 =cut
+
 1;
