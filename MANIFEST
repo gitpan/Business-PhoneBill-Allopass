@@ -1,0 +1,8 @@
+Changes
+Makefile.PL
+MANIFEST
+Allopass.pm
+Allopass/Simple.pm
+README
+COPYING
+t/use.t
