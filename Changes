@@ -1,4 +1,5 @@
 Revision history for Business::PhoneBill::Allopass
+1.02    - Fix supid make test bug, where I forgot to update package name
 1.01    - Now known affiliate ID if applicable
         - Improved object implementation
 1.00    - Changed name of package, in order to conform to the CPAN structure

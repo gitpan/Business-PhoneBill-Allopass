@@ -1,3 +1,6 @@
+package Business::PhoneBill::Allopass;
+use vars qw/$VERSION/; $VERSION = "1.02";
+
 =head1 NAME
 
 Business::PhoneBill::Allopass - A class for micro-payment system from Allopass
@@ -24,9 +27,6 @@ This class provides you a easy api to the allopass.com system. It automatically 
 See I<http://www.allopass.com/index.php4?ADV=1508058> for more informations on their system and how it basically works.
 
 =cut
-
-package Business::PhoneBill::Allopass;
-use vars qw/$VERSION/; $VERSION = "1.01";
 
 use strict;
 use HTTP::Request::Common qw(POST);

@@ -3,10 +3,10 @@ use strict;
 use Test;
 BEGIN { plan tests => 2 }
 
-use Billing::Allopass;
+use Business::PhoneBill::Allopass;
 my $session_file='apsession.tmp';
 
-my $allopass=''; $allopass=Billing::Allopass->new($session_file);
+my $allopass=''; $allopass=Business::PhoneBill::Allopass->new($session_file);
 if ($allopass){
     ok(1);
 } else {
