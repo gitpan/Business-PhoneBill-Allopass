@@ -1,5 +1,8 @@
 Revision history for Business::PhoneBill::Allopass
 
+1.06    - Fix one case where sessions aren't correcly removed 
+          (closing an session at same run time than his opening)
+1.05    - External cookies setting through httpd class (undocumented) 
 1.04    - Return text error if cann't create class 
 1.03    - Fix class constructor: variables not blessed
         - Fix some pod issues, and make Version findable by CPAN

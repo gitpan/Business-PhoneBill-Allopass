@@ -7,7 +7,7 @@ use Business::PhoneBill::Allopass;
 my $session_file='apsession.tmp';
 
 my $allopass=''; $allopass=Business::PhoneBill::Allopass->new($session_file);
-if ($allopass){
+if (ref $allopass){
     ok(1);
 } else {
     ok(0);

@@ -1,7 +1,7 @@
 package Business::PhoneBill::Allopass;
 
 use vars qw/$VERSION/;
-$VERSION = "1.04";
+$VERSION = "1.06";
 
 =head1 NAME
 
@@ -63,11 +63,15 @@ sub new {
         open TEMP, ">$ses_file" or return "Cann't create session file: ".$!; close TEMP;
     }
     my $ttl=shift || 60;
+    
+    my %arg = @_;
     my $self = {
         os       =>    0,
         ttl      =>    $ttl,
         ses_file =>    $ses_file,
         error    =>    '',
+        hhttp    =>    $arg{hhttp} || '',
+        code     =>    '',
     };
     $self = bless $self, $class;
     $self;
@@ -132,28 +136,32 @@ sub get_last_error {
 sub check_code {
     my $self=shift;
     my ($docid, $code, $datas, $ap_ca) = @_;
-    my ($site_id, $doc_id, $r)=split(/\//, $docid);
-    my ($res, $ua, $req);
-    my $baseurl = 'http://www.allopass.com/check/index.php4';
-    $ua = LWP::UserAgent->new;
-    $ua->agent('Business::PhoneBill::Allopass/'.$VERSION);
-    $req = POST $baseurl,
-        [
-	'SITE_ID'    => $site_id ,
-	'DOC_ID'     => $doc_id ,
-        'CODE0'      => $code ,
-        'DATAS'      => $datas ,
-        'AP_CA'      => $ap_ca
-	];
-    $res = $ua->simple_request($req)->as_string;
-    if ($res=~/Set-Cookie: AP_CHECK/) {
-        $self->_set_error('Allopass Check Code OK');
-        my $r = $self->_add_session($docid, $code);
-        if ($r) {
-            $self->_set_error($r);
-            return 0;
-        }
+    if ($self->_is_session($docid)) {
         return 1;
+    } elsif ($code) {
+        my ($site_id, $doc_id, $r)=split(/\//, $docid);
+        my ($res, $ua, $req);
+        my $baseurl = 'http://www.allopass.com/check/index.php4';
+        $ua = LWP::UserAgent->new;
+        $ua->agent('Business::PhoneBill::Allopass/'.$VERSION);
+        $req = POST $baseurl,
+            [
+            'SITE_ID'    => $site_id ,
+            'DOC_ID'     => $doc_id ,
+            'CODE0'      => $code ,
+            'DATAS'      => $datas ,
+            'AP_CA'      => $ap_ca
+            ];
+        $res = $ua->simple_request($req)->as_string;
+        if ($res=~/Set-Cookie: AP_CHECK/) {
+            $self->_set_error('Allopass Check Code OK');
+            my $r = $self->_add_session($docid, $code);
+            if ($r) {
+                $self->_set_error($r);
+                return 0;
+            }
+            return 1;
+        }
     }
     0;
 }
@@ -209,9 +217,10 @@ sub _is_session {
         $self->_set_error("No Session Cookie");
         return 0 
     }
+    return 0 if !ref $cookies{$docid};
     return 0 if !defined $cookies{$docid}->value;
     
-    my $code = $cookies{$docid}->value if defined $cookies{$docid}->value;
+    my $code = $cookies{$docid}->value || $self->{code};
     
     my $a=time;
     $self->_set_error("Error opening ".$self->{ses_file}." for read");
@@ -245,6 +254,7 @@ sub _add_session {
     my $self = shift;
     my $doc_id = shift;
     my $code = shift;
+    $self->{code}=$code;
     foreach($doc_id, $code){
         s/[\r\n]//g;
         s/\|/&#124;/g;
@@ -256,20 +266,25 @@ sub _add_session {
         if ($self->{os} == 0) {flock (TEMP, 8);}
     close (TEMP);
     open (OUTPUT, ">".$self->{ses_file}) or return("Error opening ".$self->{ses_file}." for write : ".$!);
-        if ($self->{os} == 0) {flock (TEMP, 2);}
+        if ($self->{os} == 0) {flock (OUTPUT, 2);}
         for (my $i = 0; $i < @index; $i++) {
             chomp $index[$i];
             next unless ($index[$i]);
             my ($docid, $pass, $IP, $heure, @autres) = split (/\|/, $index[$i]);
             next if ($a > ($heure + $self->{ttl} * 60));
+            next if $docid eq $doc_id && $pass eq $code;
             print OUTPUT "$docid|$pass|$IP|$heure||\n";
         }
         print OUTPUT "$doc_id|$code|$ENV{REMOTE_ADDR}|" . $a . "||\n";
-        if ($self->{os} == 0) {flock (TEMP, 8);}
+        if ($self->{os} == 0) {flock (OUTPUT, 8);}
     close (OUTPUT);
     $doc_id=~s/\//\./g;
     my $cookie = new CGI::Cookie(-name=>$doc_id, -value=> $code );
-    print "Set-Cookie: ",$cookie->as_string,"\n";
+    if (ref $self->{hhttp}) {
+       $self->{hhttp}->add_cookie("Set-Cookie: ".$cookie->as_string);
+    } else {
+        print "Set-Cookie: ",$cookie->as_string,"\n";
+    }
     0;
 }
 sub _end_session {
@@ -278,8 +293,16 @@ sub _end_session {
     
     my %cookies = fetch CGI::Cookie;
     my $docid=$doc_id; $docid=~s/\//\./g;
-    return("Unable to remove session : Undefined sid") if !defined $cookies{$docid}->value;
-    my $code = $cookies{$docid}->value if defined $cookies{$docid}->value;
+
+    my $code = $self->{code};
+    unless ($code) {
+        return("Unable to remove session : Undefined sid") if !ref $cookies{$docid};
+        return("Unable to remove session : Undefined sid") if !defined $cookies{$docid};
+        return("Unable to remove session : Undefined sid") if !defined $cookies{$docid}->value;
+        $code = $cookies{$docid}->value if defined $cookies{$docid}->value;
+    }
+    
+    # warn "Code :".$code;
     
     my $a=time;
     open (TEMP, $self->{ses_file}) or return("Error opening ".$self->{ses_file}." for read : ".$!);
@@ -292,16 +315,20 @@ sub _end_session {
         for (my $i = 0; $i < @index; $i++) {
             chomp $index[$i];
             next unless ($index[$i]);
-            my ($docid, $pass, $IP, $heure, @autres) = split (/\|/, $index[$i]);
+            my ($ldocid, $pass, $IP, $heure, @autres) = split (/\|/, $index[$i]);
             next if ($a > ($heure + $self->{ttl} * 60));
-            next if $docid eq $doc_id && $pass eq $code;
-            print OUTPUT "$docid|$pass|$IP|$heure||\n";
+            next if $pass eq $code;
+            print OUTPUT "$docid|$pass|$IP|$heure|$code|\n";
         }
         if ($self->{os} == 0) {flock (TEMP, 8);}
     close (OUTPUT);
     $doc_id=~s/\//\./g;
-    my $cookie = new CGI::Cookie(-name=>$doc_id, -value=> '' );
-    print "Set-Cookie: ",$cookie->as_string,"\n";
+    my $cookie = new CGI::Cookie(-name=>$docid, -value=> '-' );
+    if (ref $self->{hhttp}) {
+       $self->{hhttp}->add_cookie("Set-Cookie: ".$cookie->as_string);
+    } else {
+        print "Set-Cookie: ",$cookie->as_string,"\n";
+    }
     0;
 }
 sub _is_res_ok {
@@ -337,7 +364,7 @@ sub _set_error {
 
 =head1 Other documentation
 
-Jetez un oeil sur I<http://www.it-development.be/software/PERL/Business::PhoneBill::Allopass/> pour la documentation en français.
+Jetez un oeil sur I<http://www.it-development.be/software/PERL/Business-PhoneBill-Allopass/> pour la documentation en franÃ§ais.
 
 
 =head1 AUTHOR
