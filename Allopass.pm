@@ -1,7 +1,7 @@
 package Business::PhoneBill::Allopass;
 
 use vars qw/$VERSION/;
-$VERSION = "1.03";
+$VERSION = "1.04";
 
 =head1 NAME
 
@@ -10,7 +10,9 @@ Business::PhoneBill::Allopass - A class for micro-payment system from Allopass
 =head1 SYNOPSIS
 
   use Business::PhoneBill::Allopass;
+  
   my $allopass=Business::PhoneBill::Allopass->new($session_file, [$ttl]);
+  die "Cann't create class: ".$allopass unless ref $allopass;
   
   # Check access
   if ($allopass->check($document_id, [$RECALL])){
@@ -46,20 +48,20 @@ my $baseurl = 'http://www.allopass.com/check/vf.php4';
     $allopass=Billing::Allopass->new($session_file, [$ttl]);
 
 $session_file is the physical location for the session file. The webserver must have write access to it.
-If not, this constructor returns 0.
+If not, this constructor returns a text error message.
 
 $ttl is the number of minutes of inactivity for automatically removing sessions. Default : 60.
 
 You have to test if the returned value is a reference.
 
 =cut
+
 sub new {
     my $class   = shift;
-    my $ses_file= shift;
+    my $ses_file= shift || return "You must provide writable session file name";
     if (!-e $ses_file) {
-        open TEMP, ">$ses_file" or return 0; close TEMP;
+        open TEMP, ">$ses_file" or return "Cann't create session file: ".$!; close TEMP;
     }
-    return 0 unless -e $ses_file;
     my $ttl=shift || 60;
     my $self = {
         os       =>    0,
@@ -73,7 +75,7 @@ sub new {
 
 =item B<check> - Checks if a client have access to this document
     
-    $allopass->check($document_id, [$RECALL]);
+    $ok=$allopass->check($document_id, [$RECALL]);
 
 The RECALL parameter is provided by Allopass.com when it redirects the visitor to your website, after the secret code verification.
 Returns 1 if authorization is successfull.
@@ -158,9 +160,13 @@ sub check_code {
 
 =head1 PROPERTIES
 
+=over 4
+
 =item B<ttl> - Session time to live property.
 
-    Set it to the session expiration time, in minutes.
+    $ttl=$allopass->ttl([$ttl]);
+
+Session expiration time, in minutes.
 
 =cut
 
@@ -173,7 +179,9 @@ sub ttl {
 
 =item B<os> - Operating system property.
 
-    You need to set it to 1 only if your OS doesn't support flock (windoze ???).
+    $allopass->os(1);
+    
+You need to set it to 1 only if your OS doesn't support flock (windoze ???).
 
 =cut
 
@@ -326,6 +334,11 @@ sub _set_error {
     my $self=shift;
     $self->{error}=shift;
 }
+
+=head1 Other documentation
+
+Jetez un oeil sur I<http://www.it-development.be/software/PERL/Business::PhoneBill::Allopass/> pour la documentation en français.
+
 
 =head1 AUTHOR
 
