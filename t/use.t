@@ -12,6 +12,8 @@ if (ref $allopass){
 } else {
     ok(0);
 }
+
+
 ok(unlink($session_file));
 
 exit;

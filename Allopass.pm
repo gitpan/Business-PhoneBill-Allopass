@@ -1,7 +1,7 @@
 package Business::PhoneBill::Allopass;
 
 use vars qw/$VERSION/;
-$VERSION = "1.06";
+$VERSION = "1.08";
 
 =head1 NAME
 
@@ -26,7 +26,11 @@ Business::PhoneBill::Allopass - A class for micro-payment system from Allopass
   
 =head1 DESCRIPTION
 
-This class provides you a easy api to the allopass.com system. It automatically handles user sessions.
+This class provides you an easy api to the allopass.com system. It automatically handles user sessions.
+
+=head1 SEE ALSO
+
+Please consider using Business::PhoneBill::Allopass::Simple if you don't need session management.
 
 See I<http://www.allopass.com/index.php4?ADV=1508058> for more informations on their system and how it basically works.
 
@@ -132,7 +136,12 @@ sub get_last_error {
     shift->{error};
 }
 
-### Undocumented methods =======================================================
+=item B<check_code> - Checks if a client have access to this document
+    
+    $ok=$allopass->check_code($document_id, $code, [$datas], [$ap_ca]);
+
+=cut
+
 sub check_code {
     my $self=shift;
     my ($docid, $code, $datas, $ap_ca) = @_;
@@ -165,6 +174,8 @@ sub check_code {
     }
     0;
 }
+
+=back
 
 =head1 PROPERTIES
 
@@ -351,9 +362,9 @@ sub _is_res_ok {
 }
 sub _get_new_uid {
     my $id;
-    $id=crypt(rand(99999999999),'firstpass');
-    $id=crypt(rand(99999999999),'layer 2').$id;
-    $id=crypt(rand(99999999999),'final !').$id;
+    $id=crypt(rand(99999999999),'fi');
+    $id=crypt(rand(99999999999),'l2').$id;
+    $id=crypt(rand(99999999999),'la').$id;
     $id=~s/[\|\/\\]/\-/g;
     $id;
 }
@@ -361,6 +372,8 @@ sub _set_error {
     my $self=shift;
     $self->{error}=shift;
 }
+
+=back
 
 =head1 Other documentation
 
