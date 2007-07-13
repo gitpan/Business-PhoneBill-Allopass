@@ -1,8 +1,8 @@
 --- #YAML:1.0
 name:                Business-PhoneBill-Allopass
-version:             1.08
+version:             1.09
 abstract:            A class for micro-payment system from Allopass
-license:             ~
+license:             GPL
 generated_by:        ExtUtils::MakeMaker version 6.31
 distribution_type:   module
 requires:     

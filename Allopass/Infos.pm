@@ -108,7 +108,7 @@ sub link_cc {
 
 =head1 AUTHOR
 
-Bernard Nauwelaerts <bpn@it-development.be>
+Bernard Nauwelaerts <bpn#it-development%be>
 
 =head1 LICENSE
 

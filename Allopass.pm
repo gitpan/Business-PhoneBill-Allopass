@@ -1,7 +1,7 @@
 package Business::PhoneBill::Allopass;
 
 use vars qw/$VERSION/;
-$VERSION = "1.08";
+$VERSION = "1.09";
 
 =head1 NAME
 
@@ -382,12 +382,11 @@ Jetez un oeil sur I<http://www.it-development.be/software/PERL/Business-PhoneBil
 
 =head1 AUTHOR
 
-Bernard Nauwelaerts <bpn@it-development.be>
+Bernard Nauwelaerts <bpn#it-development%be>
 
 =head1 LICENSE
 
-GPL.  Enjoy !
-See COPYING for further informations on the GPL.
+GPL.  Enjoy! See COPYING for further informations on the GPL.
 
 =cut
 

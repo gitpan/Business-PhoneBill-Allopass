@@ -21,9 +21,9 @@ Billing::Allopass::Simple - A simple function for micropayment system from Allop
     use Business::PhoneBill::Allopass::Simple;
   
     if (allopass_check($document_id, $RECALL)){
-          print "OK\n";
+        print "OK\n";
     } else {
-          print get_last_allopass_error;
+        print get_last_allopass_error;
     }
   
 =head1 DESCRIPTION
